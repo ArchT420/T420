@@ -56,19 +56,24 @@ parted --script "${device}" -- mklabel gpt \
 part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"
 part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"
 part_root="$(ls ${device}* | grep -E "^${device}p?3$")"
+part_root="$(ls ${device}* | grep -E "^${device}p?4$")"
 
 wipefs "${part_boot}"
 wipefs "${part_swap}"
 wipefs "${part_root}"
+wipefs "${part_home}"
 
-mkfs.vfat -F32 "${part_boot}"
+mkfs.fat -F32 "${part_boot}"
 mkswap "${part_swap}"
-mkfs.f2fs -f "${part_root}"
-
 swapon "${part_swap}"
+mkfs.ext4 "${part_root}"
+mkfs.ext4 "${part_home}"
+
 mount "${part_root}" /mnt
 mkdir /mnt/boot
+mkdir /mnt/home
 mount "${part_boot}" /mnt/boot
+mount "${part_home}" /mnt/home
 
 ### Install and configure the basic system ###
 cat >>/etc/pacman.conf <<EOF
