@@ -50,8 +50,8 @@ exec 2> >(tee "stderr.log")
 
 ## Create the partitions
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
-sgdisk -n 2:0:+1G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
-sgdisk -n 3:0:+2G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
+sgdisk -n 3:0:+80G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
 
 ## Create the filesystems
@@ -74,13 +74,11 @@ mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
 
 ## Install the base Arch system
-pacstrap -i /mnt base base-devel
+pacstrap -i /mnt base base-devel --noconfirm
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
-arch-chroot /mnt
-
-bootctl install
+arch-chroot /mnt bootctl install
 
 cat <<EOF > /mnt/boot/loader/loader.conf
 default arch
@@ -131,6 +129,9 @@ pacman -S dialog wpa_supplicant
 
 ## Trim service for SSD drives
 systemctl enable fstrim.timer
+
+# Disable PC speaker beep
+echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
 # Changes the root password
 echo -e "$rootpassword""\n""$rootpassword" | passwd
