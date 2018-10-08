@@ -3,7 +3,7 @@
 #
 #
 # This script can be run by executing the following:
-# curl -sL https://git.io/vNxbN | bash
+# curl -sL https://git.io/fxZL0 | bash
 
 
 # Set the mirrorlist from https://www.archlinux.org/mirrorlist/
