@@ -23,20 +23,20 @@
 
 
 ### Get infomation from user ###
-hostname=$(dialog --stdout --inputbox "/mnt/etc/hostname" 0 0) || exit 1
-clear
-: ${hostname:?"hostname cannot be empty"}
+#hostname=$(dialog --stdout --inputbox "/mnt/etc/hostname" 0 0) || exit 1
+#clear
+#: ${hostname:?"hostname cannot be empty"}
 
-user=$(dialog --stdout --inputbox "Add default user" 0 0) || exit 1
-clear
-: ${user:?"user cannot be empty"}
+#user=$(dialog --stdout --inputbox "Add default user" 0 0) || exit 1
+#clear
+#: ${user:?"user cannot be empty"}
 
-password=$(dialog --stdout --passwordbox "Set default user password" 0 0) || exit 1
-clear
-: ${password:?"password cannot be empty"}
-password2=$(dialog --stdout --passwordbox "Retype default user password" 0 0) || exit 1
-clear
-[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
+#password=$(dialog --stdout --passwordbox "Set default user password" 0 0) || exit 1
+#clear
+#: ${password:?"password cannot be empty"}
+#password2=$(dialog --stdout --passwordbox "Retype default user password" 0 0) || exit 1
+#clear
+#[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
 
 gdisk /dev/sda
 x
