@@ -3,43 +3,25 @@
 #
 #
 # This script can be run by executing the following:
-# curl -sL https://git.io/fxZL0 | bash
-
-
-
+# curl -sL https://git.io/vNxbN | bash
 
 
 # Set the mirrorlist from https://www.archlinux.org/mirrorlist/
 # and rank 5 best mirrors, while commenting out the rest.
 
-#MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&country=NO&country=PL&country=SE&protocol=https&use_mirror_status=on"
-
-#pacman -Sy --noconfirm pacman-contrib
-
-#echo "Updating & Ranking the mirror list in: /etc/pacman.d/mirrorlist"
-#curl -s "$MIRRORLIST_URL" | \
-#    sed -e 's/^#Server/Server/' -e '/^#/d' | \
-#    rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
 
 
-### Get infomation from user ###
-#hostname=$(dialog --stdout --inputbox "/mnt/etc/hostname" 0 0) || exit 1
-#clear
-#: ${hostname:?"hostname cannot be empty"}
+## Select the installation disk, example: /dev/sda or /dev/sdb etc.
+device=$(dialog --stdout --menu "Select installtion disk" 0 0 0 ${devicelist}) || exit 1
 
-#user=$(dialog --stdout --inputbox "Add default user" 0 0) || exit 1
-#clear
-#: ${user:?"user cannot be empty"}
+## Create partitions
+sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
+sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
+sgdisk -n 3:0:+80G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
 
-#password=$(dialog --stdout --passwordbox "Set default user password" 0 0) || exit 1
-#clear
-#: ${password:?"password cannot be empty"}
-#password2=$(dialog --stdout --passwordbox "Retype default user password" 0 0) || exit 1
-#clear
-#[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
 
-gdisk /dev/sda
-x
-z
-y
-y
+
+### Set up logging ###
+exec 1> >(tee "stdout.log")
+exec 2> >(tee "stderr.log")
