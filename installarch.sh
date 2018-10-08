@@ -8,7 +8,8 @@ trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 # REPO_URL="https://s3.eu-west-2.amazonaws.com/mdaffin-arch/repo/x86_64"
 MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&country=NO&country=PL&country=SE&protocol=https&use_mirror_status=on"
 
-# pacman -Sy --noconfirm pacman-contrib
+#Enabling the rankmirrors command from pacman-contrib
+pacman -Sy --noconfirm pacman-contrib
 
 echo "Updating & Ranking the mirror list"
 curl -s "$MIRRORLIST_URL" | \
