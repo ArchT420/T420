@@ -56,7 +56,7 @@ parted --script "${device}" -- mklabel gpt \
 part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"
 part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"
 part_root="$(ls ${device}* | grep -E "^${device}p?3$")"
-part_root="$(ls ${device}* | grep -E "^${device}p?4$")"
+part_home="$(ls ${device}* | grep -E "^${device}p?4$")"
 
 wipefs "${part_boot}"
 wipefs "${part_swap}"
