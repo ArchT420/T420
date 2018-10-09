@@ -10,9 +10,7 @@ NC='\033[0m' # No Color
 WHITE='\e[1;37m'
 CYAN='\e[1;36m'
 
-##############################
-#### UEFI / BIOS detection ###
-##############################
+#### UEFI / BIOS detection
 
 bootstrapper_dialog() {
     DIALOG_RESULT=$(dialog --clear --stdout --backtitle "Arch bootstrapper" --no-shadow "$@" 2>/dev/null)
@@ -115,43 +113,47 @@ mkdir /mnt/boot
 mkdir /mnt/home
 mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
+echo -e "${CYAN}Partitions mounted.${NC}\n"
 
 ## Install the base Arch system
+echo -e "${CYAN}Installing the base system into: ${WHITE}/mnt${NC}\n"
 yes '' | pacstrap -i /mnt base base-devel
 
+echo -e "${CYAN}Generating fstab to: ${WHITE}/mnt/etc/fstab${NC}\n"
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
+echo -e "${RED}arch-chroot${NC}\n"
 ##### arch-chroot #####
 arch-chroot /mnt << EOF
-echo "${hostname}" > /mnt/etc/hostname
+echo $hostname > /etc/hostname
 sed -i '176 s/^#en_US/en_US/' /etc/locale.gen
 locale-gen
-echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
 export LANG=en_US.UTF-8
 ln -s /usr/share/zoneinfo/Europe/Tallinn > /etc/localtime
 systemctl enable dhcpcd@enp0s25.service
 pacman -S dialog wpa_supplicant bash-completion --noconfirm
 systemctl enable fstrim.timer
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
-useradd -m -g users -G wheel,storage,power -s /bin/bash "${user}"
-echo "root:${rootpassword}" | chpasswd
-echo "${user}:${password}" | chpasswd
+useradd -m -g users -G wheel,storage,power -s /bin/bash $user
+echo "root:$rootpassword" | chpasswd
+echo "$user:$password" | chpasswd
 EOF
 
-#############################
-#### Install boot loader ####
-#############################
+### Install boot loader
+
 if [[ $UEFI -eq 1 ]]; then
 arch-chroot /mnt /bin/bash <<EOF
-echo "Installing bootctl boot loader"
 bootctl install
-cat <<EOF >> /mnt/boot/loader/entries/arch.conf
+EOF
+fi
+
+cat <<EOF > /mnt/boot/loader/entries/arch.conf
 title    Arch Linux
 linux    /vmlinuz-linux
 initrd   /initramfs-linux.img
 options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
 EOF
-fi
 
 ## Enable multilib in /etc/pacman.conf - this allows the installation of 32bit applications
 if [ "$(uname -m)" = "x86_64" ]
@@ -170,8 +172,6 @@ SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
 EOF
 
-pacman -Sy
 
-exit
-umount -R /mnt
-reboot
+
+pacman -Sy
