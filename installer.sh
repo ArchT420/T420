@@ -16,8 +16,6 @@ echo -e "${RED}Enter username, password and root password.${NC}\n"
 read -p "Default user: " username
 read -p "Default user password: " password
 read -p "ROOT password: " rootpassword
-sleep 2
-clear
 
 ## Set up logging ##
 echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
