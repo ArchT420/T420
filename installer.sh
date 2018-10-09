@@ -1,7 +1,6 @@
 #!/bin/bash
 #
 #
-# 's/^#en_US/en_US/'
 # This script can be run by executing the following:
 # curl -sL https://git.io/fxZL0 | bash
 
@@ -78,22 +77,13 @@ pacstrap -i /mnt base base-devel --noconfirm
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
-arch-chroot /mnt bootctl install
+arch-chroot /mnt << EOF
 
-cat <<EOF > /mnt/boot/loader/loader.conf
-default arch
-EOF
-
-cat <<EOF > /mnt/boot/loader/entries/arch.conf
-title    Arch Linux
-linux    /vmlinuz-linux
-initrd   /initramfs-linux.img
-options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
-EOF
+## Set hostname
+echo "${hostname}" > /mnt/etc/hostname
 
 ## Set locale -- uncomment "#en_US.UTF-8 UTF-8" on line 176, inside /etc/locale.gen
 sed -i '176 s/^#en_US/en_US/' /etc/locale.gen
-
 locale-gen
 
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
@@ -103,8 +93,8 @@ export LANG=en_US.UTF-8
 ln -s /usr/share/zoneinfo/Europe/Tallinn > /etc/localtime
 timedatectl set-ntp true
 
-## Set hostname
-echo "${hostname}" > /mnt/etc/hostname
+## Enable DHCPCD (eth0 ethernet service)
+systemctl enable dhcpcd@enp0s25.service
 
 ## Enable multilib in /etc/pacman.conf- this allows the installation of 32bit applications
 if [ "$(uname -m)" = "x86_64" ]
@@ -112,19 +102,11 @@ then
         cp /etc/pacman.conf /etc/pacman.conf.bkp
         sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /etc/pacman.conf > /tmp/pacman
         mv /tmp/pacman /etc/pacman.conf
-
 fi
-
-## Add AUR repository in /etc/pacman.conf
-cat <<EOF > /etc/pacman.conf
-[archlinuxfr]
-SigLevel = Never
-Server = http://repo.archlinux.fr/$arch
-EOF
 
 pacman -Sy
 
-## Add wifi support
+## Add wireless
 pacman -S dialog wpa_supplicant
 
 ## Trim service for SSD drives
@@ -133,13 +115,9 @@ systemctl enable fstrim.timer
 # Disable PC speaker beep
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
-# Changes the root password
-echo -e "$rootpassword""\n""$rootpassword" | passwd
-
 arch-chroot /mnt useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
-# Changes the default user password
-echo -e "$password""\n""$password" | passwd "$user"
-# echo "$user:$password" | chpasswd --root /mnt
-# echo "root:$rootpassword" | chpasswd --root /mnt
 
-echo "installation went well"
+echo "$user:$password" | chpasswd
+echo "root:$rootpassword" | chpasswd
+
+EOF
