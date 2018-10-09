@@ -140,11 +140,7 @@ echo "root:$rootpassword" | chpasswd
 echo "$user:$password" | chpasswd
 EOF
 
-sed -i '82 s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g' /etc/sudoers > /etc/sudoers.new
-sed -i "83i Defaults rootpw" /etc/sudoers.new
-export EDITOR="cp /etc/sudoers.new"
-visudo
-rm /etc/sudoers.new
+echo -e "%wheel ALL=(ALL) ALL\nDefaults rootpw" > /etc/sudoers.d/99_wheel 
 
 echo -e "${RED}Installing bootloader${NC}\n"
 ### Install boot loader
@@ -177,6 +173,9 @@ cat <<EOF >> /mnt/etc/pacman.conf
 SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
 EOF
-
-echo "${CYAN} Type EDITOR=nano visudo, and uncomment %wheel and add Defaults rootpw"
 pacman -Sy
+echo "${RED} unmounting /mnt"
+umount -R /mnt
+
+echo "${CYAN} Ready to reboot, write umount -R /mnt"
+
