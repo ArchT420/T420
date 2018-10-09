@@ -163,8 +163,8 @@ options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
 EOF
 echo -e "${WHITE}Bootloader configured.${NC}\n"
 
-echo -e "${RED}Enabling [multilib] in: ${WHITE}/etc/pacman.conf${NC}\n"
 ## Enable multilib in /etc/pacman.conf - this allows the installation of 32bit applications
+echo -e "${RED}Enabling [multilib] in: ${WHITE}/etc/pacman.conf${NC}\n"
 if [ "$(uname -m)" = "x86_64" ]
 then
 cp /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bkp
@@ -173,8 +173,8 @@ mv /tmp/pacman /mnt/etc/pacman.conf
 fi
 echo -e "${WHITE}Multilib enabled.${NC}\n"
 
-echo -e "${RED}Enabling AUR repository in: ${WHITE}/etc/pacman.conf${NC}\n"
 ## Add AUR repository in the end of /etc/pacman.conf
+echo -e "${RED}Enabling AUR repository in: ${WHITE}/etc/pacman.conf${NC}\n"
 cat <<EOF >> /mnt/etc/pacman.conf
 
 [archlinuxfr]
@@ -182,8 +182,13 @@ SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
 EOF
 echo -e "${WHITE}AUR repository added.${NC}\n"
-echo -e "${YELLOW}Updating AUR...${NC}\n"
+
+echo -e "${YELLOW}Synchronizing...${NC}\n"
+arch-chroot /mnt << EOF
 pacman -Sy
+EOF
+echo -e "${YELLOW}Synced.${NC}\n"
+
 echo -e "${RED}Unmounting partitions.${NC}\n"
 umount -R /mnt
 echo -e "${CYAN}Arch Linux installation complete. Ready to reboot.${NC}\n"
