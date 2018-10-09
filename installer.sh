@@ -32,13 +32,15 @@ device=$(dialog --stdout --menu "Select installtion disk" 0 0 0 ${devicelist}) |
 clear
 echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
 echo -e "${RED}Now destroying any partition tables on the selected disk.${NC}\n"
+sleep 5
 sgdisk -Z ${device}
 echo -e "${WHITE} ${device}${RED}Has been zapped.${NC}\n"
-sleep 2
+sleep 3
 clear
 
 ## Create the partitions
 echo -e "${CYAN}Now creating the partitions.${NC}\n"
+
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
 
 echo -e "${PURPLE}/boot partition has been created.${NC}\n"
