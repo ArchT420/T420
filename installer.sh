@@ -23,7 +23,6 @@ echo -e "${YELLOW}Installing pacman-contrib (required for rankmirrors).${NC}\n"
 pacman -Sy --noconfirm pacman-contrib
 echo -e "${YELLOW}Updating & Ranking the mirror list in:${WHITE} /etc/pacman.d/mirrorlist${NC}\n"
 curl -s "$MIRRORLIST_URL" | \
-echo -e "${YELLOW}Uncommenting 5 top mirrors in:${WHITE} /etc/pacman.d/mirrorlist${NC}\n"
     sed -e 's/^#Server/Server/' -e '/^#/d' | \
     rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
 
