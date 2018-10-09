@@ -5,6 +5,7 @@
 # This script can be run by executing the following:
 # curl -sL https://git.io/fxZL0 | bash
 
+arch='$arch'
 
 # Set the mirrorlist from https://www.archlinux.org/mirrorlist/
 # and rank 5 best mirrors, while commenting out the rest.
