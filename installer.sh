@@ -34,17 +34,25 @@ echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
 echo -e "${RED}Now destroying any partition tables on the selected disk.${NC}\n"
 sgdisk -Z ${device}
 echo -e "${WHITE} ${device}${RED}Has been zapped.${NC}\n"
+sleep 2
 clear
 
 ## Create the partitions
-echo -e "${CYAN}Now creating the partitions.{NC}\n"
+echo -e "${CYAN}Now creating the partitions.${NC}\n"
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
+
 echo -e "${PURPLE}/boot partition has been created.${NC}\n"
+
 sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
+
 echo -e "${PURPLE}/swap partition has been created.${NC}\n"
+
 sgdisk -n 3:0:+1G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+
 echo -e "${PURPLE} root partition has been created.${NC}\n"
+
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
+
 echo -e "${PURPLE}/home partition has been created.${NC}\n"
 
 ## Create the filesystems
