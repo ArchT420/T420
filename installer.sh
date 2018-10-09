@@ -5,8 +5,6 @@
 # This script can be run by executing the following:
 # curl -sL https://git.io/fxZL0 | bash
 
-arch='$arch'
-
 # Set the mirrorlist from https://www.archlinux.org/mirrorlist/
 # and rank 5 best mirrors, while commenting out the rest.
 MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&country=NO&country=PL&country=SE&protocol=https&use_mirror_status=on"
@@ -75,7 +73,7 @@ mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
 
 ## Install the base Arch system
-pacstrap -i /mnt base base-devel
+pacstrap -i /mnt base base-devel --noconfirm
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
@@ -115,18 +113,17 @@ systemctl enable fstrim.timer
 # Disable PC speaker beep
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
-useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
+arch-chroot /mnt useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
 
-echo "$user:$password" | chpasswd --root /mnt
-echo "root:$rootpassword" | chpasswd --root /mnt
+echo "$user:$password" | chpasswd
+echo "root:$rootpassword" | chpasswd
 EOF
 
 ## Add AUR repository in /etc/pacman.conf
 cat <<EOF >> /etc/pacman.conf
-Architecture = auto
 [archlinuxfr]
 SigLevel = Never
-Server = http://repo.archlinux.fr/$arch
+Server = http://repo.archlinux.fr/\$arch
 EOF
 
 pacman -Sy
