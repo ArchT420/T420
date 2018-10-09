@@ -92,7 +92,7 @@ mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
 
 ## Install the base Arch system
-#pacstrap -i /mnt base base-devel --noconfirm
+pacstrap -i /mnt base base-devel --noconfirm
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
