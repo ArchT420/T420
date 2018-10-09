@@ -143,23 +143,13 @@ EOF
 #############################
 if [[ $UEFI -eq 1 ]]; then
 arch-chroot /mnt /bin/bash <<EOF
-echo "Installing Gummiboot boot loader"
-pacman --noconfirm -S gummiboot
-gummiboot install
-cat << GRUB > /boot/loader/entries/arch.conf
-title          Arch Linux
-linux          /vmlinuz-linux
-initrd         /initramfs-linux.img
-options        cryptdevice=/dev/sda2:vg00 root=/dev/mapper/vg00-lvroot rw
-GRUB
-EOF
-else
-arch-chroot /mnt /bin/bash <<EOF
-    echo "Installing Grub boot loader"
-    pacman --noconfirm -S grub
-    grub-install --target=i386-pc --recheck /dev/sda
-    sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT.*|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/partition:MyStorage root=/dev/mapper/MyStorage-rootvol"|' /etc/default/grub
-    grub-mkconfig -o /boot/grub/grub.cfg
+echo "Installing bootctl boot loader"
+bootctl install
+cat <<EOF >> /mnt/boot/loader/entries/arch.conf
+title    Arch Linux
+linux    /vmlinuz-linux
+initrd   /initramfs-linux.img
+options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
 EOF
 fi
 
@@ -178,13 +168,6 @@ cat <<EOF >> /etc/pacman.conf
 [archlinuxfr]
 SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
-EOF
-
-cat <<EOF >> /mnt/boot/loader/entries/arch.conf
-title    Arch Linux
-linux    /vmlinuz-linux
-initrd   /initramfs-linux.img
-options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
 EOF
 
 pacman -Sy
