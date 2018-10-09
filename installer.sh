@@ -98,6 +98,9 @@ genfstab -U -p /mnt >> /mnt/etc/fstab
 ##### arch-chroot #####
 arch-chroot /mnt << EOF
 
+## UEFI Install Gummiboot aka. bootctl/systemd-boot
+bootctl install
+
 ## Set hostname
 echo "${hostname}" > /mnt/etc/hostname
 
@@ -115,7 +118,7 @@ ln -s /usr/share/zoneinfo/Europe/Tallinn > /etc/localtime
 systemctl enable dhcpcd@enp0s25.service
 
 ## Add wireless
-pacman -S dialog wpa_supplicant --noconfirm
+pacman -S dialog wpa_supplicant bash-completion --noconfirm
 
 ## Trim service for SSD drives
 systemctl enable fstrim.timer
@@ -146,4 +149,15 @@ SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
 EOF
 
+cat <<EOF >> /mnt/boot/loader/entries/arch.conf
+title    Arch Linux
+linux    /vmlinuz-linux
+initrd   /initramfs-linux.img
+options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
+EOF
+
 pacman -Sy
+
+exit
+umount -R /mnt
+reboot
