@@ -10,8 +10,17 @@ NC='\033[0m' # No Color
 WHITE='\e[1;37m'
 CYAN='\e[1;36m'
 
+## Users setup
+echo -e "${RED}Enter username, password and root password.${NC}\n"
+
+read -p "Default user: " username
+read -p "Default user password: " password
+read -p "ROOT password: " rootpassword
+sleep 2
+clear
+
 ## Set up logging ##
-echo -e "${CYAN}Output & Error logging has been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
+echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
 exec 1> >(tee "stdout.log")
 exec 2> >(tee "stderr.log")
 sleep 3
@@ -22,6 +31,7 @@ MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&coun
 echo -e "${YELLOW}Installing pacman-contrib (required for rankmirrors).${NC}\n"
 pacman -Sy --noconfirm pacman-contrib
 echo -e "${YELLOW}Updating & Ranking the mirror list in:${WHITE} /etc/pacman.d/mirrorlist${NC}\n"
+
 curl -s "$MIRRORLIST_URL" | \
     sed -e 's/^#Server/Server/' -e '/^#/d' | \
     rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
@@ -42,20 +52,9 @@ clear
 echo -e "${CYAN}Now creating the partitions.${NC}\n"
 
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
-
-echo -e "${PURPLE}/boot partition has been created.${NC}\n"
-
 sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
-
-echo -e "${PURPLE}/swap partition has been created.${NC}\n"
-
 sgdisk -n 3:0:+1G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
-
-echo -e "${PURPLE} root partition has been created.${NC}\n"
-
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
-
-echo -e "${PURPLE}/home partition has been created.${NC}\n"
 
 ## Create the filesystems
 part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"	# /boot partition1 created by sgdisk
@@ -63,7 +62,7 @@ part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"	# /swap partition2 creat
 part_root="$(ls ${device}* | grep -E "^${device}p?3$")"	#   /	partition3 created by sgdisk
 part_home="$(ls ${device}* | grep -E "^${device}p?4$")"	# /home partition4 created by sgdisk
 
-
+echo -e "${CYAN}Now formatting the partitions.${NC}\n"
 mkfs.fat -F32 "${part_boot}"
 mkswap "${part_swap}"
 swapon "${part_swap}"
@@ -71,6 +70,7 @@ mkfs.ext4 "${part_root}"
 mkfs.ext4 "${part_home}"
 
 ## Mount the partitions
+echo -e "${CYAN}Now mounting the partitions.${NC}\n"
 mount "${part_root}" /mnt
 mkdir /mnt/boot
 mkdir /mnt/home
@@ -78,7 +78,7 @@ mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
 
 ## Install the base Arch system
-pacstrap -i /mnt base base-devel --noconfirm
+#pacstrap -i /mnt base base-devel --noconfirm
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
