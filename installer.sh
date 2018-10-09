@@ -10,6 +10,31 @@ NC='\033[0m' # No Color
 WHITE='\e[1;37m'
 CYAN='\e[1;36m'
 
+##############################
+#### UEFI / BIOS detection ###
+##############################
+
+bootstrapper_dialog() {
+    DIALOG_RESULT=$(dialog --clear --stdout --backtitle "Arch bootstrapper" --no-shadow "$@" 2>/dev/null)
+}
+
+bootstrapper_dialog --title "Welcome" --msgbox "Welcome to base Arch Linux bootstrapper.\n" 6 60
+
+efivar -l >/dev/null 2>&1
+
+if [[ $? -eq 0 ]]; then
+    UEFI_BIOS_text="UEFI detected."
+    UEFI_radio="on"
+    BIOS_radio="off"
+else
+    UEFI_BIOS_text="BIOS detected."
+    UEFI_radio="off"
+    BIOS_radio="on"
+fi
+
+bootstrapper_dialog --title "UEFI or BIOS" --radiolist "${UEFI_BIOS_text}\nPress <Enter> to accept." 10 30 2 1 UEFI "$UEFI_radio" 2 BIOS "$BIOS_radio"
+[[ $DIALOG_RESULT -eq 1 ]] && UEFI=1 || UEFI=0
+
 ## Get information from user ##
 hostname=$(dialog --stdout --inputbox "HOSTNAME" 0 0) || exit 1
 clear
@@ -67,7 +92,7 @@ echo -e "${CYAN}Now creating the partitions.${NC}\n"
 
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
 sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
-sgdisk -n 3:0:+1G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+sgdisk -n 3:0:+3G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
 
 ## Create the filesystems
@@ -92,41 +117,51 @@ mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
 
 ## Install the base Arch system
-pacstrap -i /mnt base base-devel --noconfirm
+yes '' | pacstrap -i /mnt base base-devel
+
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
 arch-chroot /mnt << EOF
-
-## UEFI Install Gummiboot aka. bootctl/systemd-boot
-bootctl install
-
-## Set hostname
 echo "${hostname}" > /mnt/etc/hostname
-
-## Set locale -- uncomment #en_US.UTF-8 UTF-8" on line 176, inside /etc/locale.gen
 sed -i '176 s/^#en_US/en_US/' /etc/locale.gen
 locale-gen
-
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 export LANG=en_US.UTF-8
-
-## Set Time & Timezone
 ln -s /usr/share/zoneinfo/Europe/Tallinn > /etc/localtime
-
-## Enable DHCPCD (eth0 ethernet service)
 systemctl enable dhcpcd@enp0s25.service
-
-## Add wireless
 pacman -S dialog wpa_supplicant bash-completion --noconfirm
-
-## Trim service for SSD drives
 systemctl enable fstrim.timer
-
-# Disable PC speaker beep
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
-
+useradd -m -g users -G wheel,storage,power -s /bin/bash "${user}"
+echo "root:${rootpassword}" | chpasswd
+echo "${user}:${password}" | chpasswd
 EOF
+
+#############################
+#### Install boot loader ####
+#############################
+if [[ $UEFI -eq 1 ]]; then
+arch-chroot /mnt /bin/bash <<EOF
+echo "Installing Gummiboot boot loader"
+pacman --noconfirm -S gummiboot
+gummiboot install
+cat << GRUB > /boot/loader/entries/arch.conf
+title          Arch Linux
+linux          /vmlinuz-linux
+initrd         /initramfs-linux.img
+options        cryptdevice=/dev/sda2:vg00 root=/dev/mapper/vg00-lvroot rw
+GRUB
+EOF
+else
+arch-chroot /mnt /bin/bash <<EOF
+    echo "Installing Grub boot loader"
+    pacman --noconfirm -S grub
+    grub-install --target=i386-pc --recheck /dev/sda
+    sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT.*|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/partition:MyStorage root=/dev/mapper/MyStorage-rootvol"|' /etc/default/grub
+    grub-mkconfig -o /boot/grub/grub.cfg
+EOF
+fi
 
 ## Enable multilib in /etc/pacman.conf - this allows the installation of 32bit applications
 if [ "$(uname -m)" = "x86_64" ]
@@ -134,10 +169,6 @@ then
 		cp /etc/pacman.conf /etc/pacman.conf.bkp
 		sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /etc/pacman.conf > /tmp/pacman
 		mv /tmp/pacman /etc/pacman.conf
-
-		useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
-		echo "root:$rootpassword" | chpasswd
-		echo "$user:$password" | chpasswd
 
 fi
 
