@@ -105,6 +105,7 @@ mkswap "${part_swap}"
 swapon "${part_swap}"
 mkfs.ext4 "${part_root}"
 mkfs.ext4 "${part_home}"
+echo -e "${WHITE}Partitions formatted.${NC}\n"
 
 ## Mount the partitions
 echo -e "${CYAN}Now mounting the partitions.${NC}\n"
@@ -140,32 +141,39 @@ echo "root:$rootpassword" | chpasswd
 echo "$user:$password" | chpasswd
 EOF
 
-echo -e "%wheel ALL=(ALL) ALL\nDefaults rootpw" > /etc/sudoers.d/99_wheel 
+echo -e "${RED}Adding "${user}" to sudoers.${NC}\n"
+echo -e "%wheel ALL=(ALL) ALL\nDefaults rootpw" > /mnt/etc/sudoers.d/99_wheel 
+echo -e "${RED}"${user}" is now part of the group ${WHITE}%wheel.${NC}\n"
 
-echo -e "${RED}Installing bootloader${NC}\n"
+echo -e "${RED}Installing bootloader...${NC}\n"
 ### Install boot loader
 if [[ $UEFI -eq 1 ]]; then
 arch-chroot /mnt /bin/bash <<EOF
 bootctl install
 EOF
 fi
+echo -e "${WHITE}Bootloader installed.${NC}\n"
 
+echo -e "${RED}Configuring the bootloader.${NC}\n"
 cat <<EOF > /mnt/boot/loader/entries/arch.conf
 title    Arch Linux
 linux    /vmlinuz-linux
 initrd   /initramfs-linux.img
 options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
 EOF
+echo -e "${WHITE}Bootloader configured.${NC}\n"
 
+echo -e "${RED}Enabling [multilib] in: ${WHITE}/etc/pacman.conf${NC}\n"
 ## Enable multilib in /etc/pacman.conf - this allows the installation of 32bit applications
 if [ "$(uname -m)" = "x86_64" ]
 then
 cp /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bkp
 sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /mnt/etc/pacman.conf > /tmp/pacman
 mv /tmp/pacman /mnt/etc/pacman.conf
-
 fi
+echo -e "${WHITE}Multilib enabled.${NC}\n"
 
+echo -e "${RED}Enabling AUR repository in: ${WHITE}/etc/pacman.conf${NC}\n"
 ## Add AUR repository in the end of /etc/pacman.conf
 cat <<EOF >> /mnt/etc/pacman.conf
 
@@ -173,9 +181,9 @@ cat <<EOF >> /mnt/etc/pacman.conf
 SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
 EOF
+echo -e "${WHITE}AUR repository added.${NC}\n"
+echo -e "${YELLOW}Updating AUR...${NC}\n"
 pacman -Sy
-echo "${RED} unmounting /mnt"
+echo -e "${RED}Unmounting partitions.${NC}\n"
 umount -R /mnt
-
-echo "${CYAN} Ready to reboot, write umount -R /mnt"
-
+echo -e "${CYAN}Arch Linux installation complete. Ready to reboot.${NC}\n"
