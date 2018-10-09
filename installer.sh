@@ -73,25 +73,30 @@ mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
 
 ## Install the base Arch system
-pacstrap -i /mnt base base-devel
+pacstrap -i /mnt base base-devel --noconfirm
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
 arch-chroot /mnt << EOF
 
+## Set hostname
 echo "${hostname}" > /mnt/etc/hostname
 
+## Set locale -- uncomment #en_US.UTF-8 UTF-8" on line 176, inside /etc/locale.gen
 sed -i '176 s/^#en_US/en_US/' /etc/locale.gen
 locale-gen
 
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 export LANG=en_US.UTF-8
 
+## Set Time & Timezone
 ln -s /usr/share/zoneinfo/Europe/Tallinn > /etc/localtime
 timedatectl set-ntp true
 
+## Enable DHCPCD (eth0 ethernet service)
 systemctl enable dhcpcd@enp0s25.service
 
+## Enable multilib in /etc/pacman.conf- this allows the installation of 32bit applications
 if [ "$(uname -m)" = "x86_64" ]
 then
         cp /etc/pacman.conf /etc/pacman.conf.bkp
@@ -99,10 +104,13 @@ then
         mv /tmp/pacman /etc/pacman.conf
 fi
 
+## Add wireless
 pacman -S dialog wpa_supplicant --noconfirm
 
+## Trim service for SSD drives
 systemctl enable fstrim.timer
 
+# Disable PC speaker beep
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
 useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
@@ -111,6 +119,7 @@ echo "$user:$password" | chpasswd --root /mnt
 echo "root:$rootpassword" | chpasswd --root /mnt
 EOF
 
+## Add AUR repository in /etc/pacman.conf
 cat <<EOF >> /etc/pacman.conf
 [archlinuxfr]
 SigLevel = Never
