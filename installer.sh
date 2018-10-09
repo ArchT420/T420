@@ -12,14 +12,14 @@ CYAN='\e[1;36m'
 
 ## Set up logging ##
 echo -e "${CYAN}Output & Error logging has been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
-echo -e "${CYAN}To read the logs simply type nano stdout.log or nano stderr.log:${NC}\n"
 exec 1> >(tee "stdout.log")
 exec 2> >(tee "stderr.log")
 sleep 3
 
 # Rank 5 best mirrors from https://www.archlinux.org/mirrorlist/ and comment out the rest.
 MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&country=NO&country=PL&country=SE&protocol=https&use_mirror_status=on"
-echo -e "${YELLOW}Installing pacman-contrib for the rankmirrors command${NC}\n"
+
+echo -e "${YELLOW}Installing pacman-contrib (required for rankmirrors).${NC}\n"
 pacman -Sy --noconfirm pacman-contrib
 echo -e "${YELLOW}Updating & Ranking the mirror list in:${WHITE} /etc/pacman.d/mirrorlist${NC}\n"
 curl -s "$MIRRORLIST_URL" | \
