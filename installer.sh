@@ -31,25 +31,28 @@ devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
 device=$(dialog --stdout --menu "Select installtion disk" 0 0 0 ${devicelist}) || exit 1
 clear
 echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
-echo -e "${RED}Now destroying any partition tables on the disk.${NC}\n"
-sleep 10
+echo -e "${RED}Now destroying any partition tables on the selected disk.${NC}\n"
 sgdisk -Z ${device}
+echo -e "${WHITE} ${device}${RED}Has been zapped.${NC}\n"
+clear
 
 ## Create the partitions
+echo -e "${CYAN}Now creating the partitions.{NC}\n"
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
+echo -e "${PURPLE}/boot partition has been created.${NC}\n"
 sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
+echo -e "${PURPLE}/swap partition has been created.${NC}\n"
 sgdisk -n 3:0:+1G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+echo -e "${PURPLE} root partition has been created.${NC}\n"
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
+echo -e "${PURPLE}/home partition has been created.${NC}\n"
 
 ## Create the filesystems
 part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"	# /boot partition1 created by sgdisk
-echo -e "${PURPLE}/boot partition has been created.${NC}\n"
 part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"	# /swap partition2 created by sgdisk
-echo -e "${PURPLE}/swap partition has been created.${NC}\n"
 part_root="$(ls ${device}* | grep -E "^${device}p?3$")"	#   /	partition3 created by sgdisk
-echo -e "${PURPLE} root partition has been created.${NC}\n"
 part_home="$(ls ${device}* | grep -E "^${device}p?4$")"	# /home partition4 created by sgdisk
-echo -e "${PURPLE}/home partition has been created.${NC}\n"
+
 
 mkfs.fat -F32 "${part_boot}"
 mkswap "${part_swap}"
