@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 #
+# 's/^#en_US/en_US/'
 # This script can be run by executing the following:
 # curl -sL https://git.io/fxZL0 | bash
 
@@ -50,7 +51,7 @@ exec 2> >(tee "stderr.log")
 ## Create the partitions
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
 sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
-sgdisk -n 3:0:+80G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+sgdisk -n 3:0:+1G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
 
 ## Create the filesystems
@@ -104,8 +105,6 @@ then
         mv /tmp/pacman /etc/pacman.conf
 fi
 
-pacman -Sy
-
 ## Add wireless
 pacman -S dialog wpa_supplicant
 
@@ -119,5 +118,13 @@ arch-chroot /mnt useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
 
 echo "$user:$password" | chpasswd
 echo "root:$rootpassword" | chpasswd
-
 EOF
+
+## Add AUR repository in /etc/pacman.conf
+cat <<EOF >> /home/user/Documents/pacman.conf
+[archlinuxfr]
+SigLevel = Never
+Server = http://repo.archlinux.fr/$arch
+EOF
+
+pacman -Sy
