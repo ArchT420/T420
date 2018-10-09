@@ -54,10 +54,10 @@ sgdisk -n 3:0:+1G -c 0:"root" ${device} # partition 3 (ROOT), default start bloc
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
 
 ## Create the filesystems
-part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"	# /boot partition created by sgdisk
-part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"	# /swap partition created by sgdisk
-part_root="$(ls ${device}* | grep -E "^${device}p?3$")"	#   /	partition created by sgdisk
-part_home="$(ls ${device}* | grep -E "^${device}p?4$")"	# /home partition created by sgdisk
+part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"	# /boot partition1 created by sgdisk
+part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"	# /swap partition2 created by sgdisk
+part_root="$(ls ${device}* | grep -E "^${device}p?3$")"	#   /	partition3 created by sgdisk
+part_home="$(ls ${device}* | grep -E "^${device}p?4$")"	# /home partition4 created by sgdisk
 
 mkfs.fat -F32 "${part_boot}"
 mkswap "${part_swap}"
@@ -96,14 +96,6 @@ timedatectl set-ntp true
 ## Enable DHCPCD (eth0 ethernet service)
 systemctl enable dhcpcd@enp0s25.service
 
-## Enable multilib in /etc/pacman.conf- this allows the installation of 32bit applications
-if [ "$(uname -m)" = "x86_64" ]
-then
-        cp /etc/pacman.conf /etc/pacman.conf.bkp
-        sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /etc/pacman.conf > /tmp/pacman
-        mv /tmp/pacman /etc/pacman.conf
-fi
-
 ## Add wireless
 pacman -S dialog wpa_supplicant --noconfirm
 
@@ -113,14 +105,23 @@ systemctl enable fstrim.timer
 # Disable PC speaker beep
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
-useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
-
-echo "$user:$password" | chpasswd --root /mnt
-echo "root:$rootpassword" | chpasswd --root /mnt
 EOF
+
+## Enable multilib in /etc/pacman.conf- this allows the installation of 32bit applications
+if [ "$(uname -m)" = "x86_64" ]
+then
+        cp /etc/pacman.conf /etc/pacman.conf.bkp
+        sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /etc/pacman.conf > /tmp/pacman
+        mv /tmp/pacman /etc/pacman.conf
+		useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
+		echo "$user:$password" | chpasswd
+		echo "root:$rootpassword" | chpasswd
+
+fi
 
 ## Add AUR repository in /etc/pacman.conf
 cat <<EOF >> /etc/pacman.conf
+
 [archlinuxfr]
 SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
