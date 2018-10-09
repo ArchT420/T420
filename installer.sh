@@ -82,7 +82,7 @@ arch-chroot /mnt << EOF
 ## Set hostname
 echo "${hostname}" > /mnt/etc/hostname
 
-## Set locale -- uncomment "#en_US.UTF-8 UTF-8" on line 176, inside /etc/locale.gen
+## Set locale uncomment en_US.UTF-8 UTF-8" on line 176, inside /etc/locale.gen
 sed -i '176 s/^#en_US/en_US/' /etc/locale.gen
 locale-gen
 
