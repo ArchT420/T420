@@ -1,51 +1,38 @@
 #!/bin/bash
-#
-#
-# 's/^#en_US/en_US/'
 # This script can be run by executing the following:
 # curl -sL https://git.io/fxZL0 | bash
 
-# Set the mirrorlist from https://www.archlinux.org/mirrorlist/
-# and rank 5 best mirrors, while commenting out the rest.
+
+## Installer colors
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+NC='\033[0m' # No Color
+WHITE='\e[1;37m'
+CYAN='\e[1;36m'
+
+## Set up logging ##
+echo -e "${CYAN}Output & Error logging has been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
+echo -e "${CYAN}To read the logs simply type nano stdout.log or nano stderr.log:${NC}\n"
+exec 1> >(tee "stdout.log")
+exec 2> >(tee "stderr.log")
+sleep 3
+
+# Rank 5 best mirrors from https://www.archlinux.org/mirrorlist/ and comment out the rest.
 MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&country=NO&country=PL&country=SE&protocol=https&use_mirror_status=on"
-
+echo -e "${YELLOW}Installing pacman-contrib for the rankmirrors command${NC}\n"
 pacman -Sy --noconfirm pacman-contrib
-
-echo "Updating & Ranking the mirror list in: /etc/pacman.d/mirrorlist"
+echo -e "${YELLOW}Updating & Ranking the mirror list in:${WHITE} /etc/pacman.d/mirrorlist${NC}\n"
 curl -s "$MIRRORLIST_URL" | \
+echo -e "${YELLOW}Uncommenting 5 top mirrors in:${WHITE} /etc/pacman.d/mirrorlist${NC}\n"
     sed -e 's/^#Server/Server/' -e '/^#/d' | \
     rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
-
-## Get infomation from user ##
-hostname=$(dialog --stdout --inputbox "/mnt/etc/hostname" 0 0) || exit 1
-clear
-: ${hostname:?"hostname cannot be empty"}
-
-user=$(dialog --stdout --inputbox "Add default user" 0 0) || exit 1
-clear
-: ${user:?"user cannot be empty"}
-
-password=$(dialog --stdout --passwordbox "Set default user password" 0 0) || exit 1
-clear
-: ${password:?"password cannot be empty"}
-password2=$(dialog --stdout --passwordbox "Retype password" 0 0) || exit 1
-clear
-[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
-
-rootpassword=$(dialog --stdout --passwordbox "Set ROOT password" 0 0) || exit 1
-clear
-: ${rootpassword:?"password cannot be empty"}
-rootpassword2=$(dialog --stdout --passwordbox "Retype ROOT password" 0 0) || exit 1
-clear
-[[ "$rootpassword" == "$rootpassword2" ]] || ( echo "Passwords did not match"; exit 1; )
 
 ## Select the installation disk, example: /dev/sda or /dev/sdb etc.
 devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
 device=$(dialog --stdout --menu "Select installtion disk" 0 0 0 ${devicelist}) || exit 1
-
-## Set up logging ##
-exec 1> >(tee "stdout.log")
-exec 2> >(tee "stderr.log")
+echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
+echo -e "${RED}Now destroying any partition tables on the disk.${NC}\n"
+sleep 10
 
 ## Create the partitions
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
@@ -55,9 +42,13 @@ sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start
 
 ## Create the filesystems
 part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"	# /boot partition1 created by sgdisk
+echo -e "${PURPLE}/boot partition has been created.${NC}\n"
 part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"	# /swap partition2 created by sgdisk
+echo -e "${PURPLE}/swap partition has been created.${NC}\n"
 part_root="$(ls ${device}* | grep -E "^${device}p?3$")"	#   /	partition3 created by sgdisk
+echo -e "${PURPLE} root partition has been created.${NC}\n"
 part_home="$(ls ${device}* | grep -E "^${device}p?4$")"	# /home partition4 created by sgdisk
+echo -e "${PURPLE}/home partition has been created.${NC}\n"
 
 mkfs.fat -F32 "${part_boot}"
 mkswap "${part_swap}"
