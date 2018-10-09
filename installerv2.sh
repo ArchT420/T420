@@ -1,7 +1,7 @@
 #!/bin/bash
 # Installscript v2
 # This script can be run by executing the following:
-# curl -sL https://git.io/fxZL0 | bash
+# curl -sL https://git.io/fxnHC | bash
 
 ########## Variables ##########
 MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&country=NO&country=PL&country=SE&protocol=https&use_mirror_status=on"
