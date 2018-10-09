@@ -113,9 +113,9 @@ then
         cp /etc/pacman.conf /etc/pacman.conf.bkp
         sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /etc/pacman.conf > /tmp/pacman
         mv /tmp/pacman /etc/pacman.conf
-		useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
-		echo "$user:$password" | chpasswd
-		echo "root:$rootpassword" | chpasswd
+	useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
+	echo "$user:$password" | chpasswd
+	echo "root:$rootpassword" | chpasswd
 
 fi
 
