@@ -29,9 +29,11 @@ curl -s "$MIRRORLIST_URL" | \
 ## Select the installation disk, example: /dev/sda or /dev/sdb etc.
 devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
 device=$(dialog --stdout --menu "Select installtion disk" 0 0 0 ${devicelist}) || exit 1
+clear
 echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
 echo -e "${RED}Now destroying any partition tables on the disk.${NC}\n"
 sleep 10
+sgdisk -Z ${device}
 
 ## Create the partitions
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
