@@ -73,8 +73,7 @@ mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
 
 ## Install the base Arch system
-pacstrap -i /mnt base base-devel << EOF
-EOF
+pacstrap -i /mnt base base-devel
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 ##### arch-chroot #####
@@ -106,7 +105,7 @@ then
 fi
 
 ## Add wireless
-pacman -S dialog wpa_supplicant
+pacman -S dialog wpa_supplicant --noconfirm
 
 ## Trim service for SSD drives
 systemctl enable fstrim.timer
@@ -114,10 +113,10 @@ systemctl enable fstrim.timer
 # Disable PC speaker beep
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
-arch-chroot /mnt useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
+useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
 
-echo "$user:$password" | chpasswd
-echo "root:$rootpassword" | chpasswd
+echo "$user:$password" | chpasswd --root /mnt
+echo "root:$rootpassword" | chpasswd --root /mnt
 EOF
 
 ## Add AUR repository in /etc/pacman.conf
