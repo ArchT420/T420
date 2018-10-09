@@ -50,7 +50,7 @@ exec 2> >(tee "stderr.log")
 ## Create the partitions
 sgdisk -n 1:0:+200M -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
 sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
-sgdisk -n 3:0:+80G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+sgdisk -n 3:0:+1G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
 
 ## Create the filesystems
