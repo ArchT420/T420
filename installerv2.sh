@@ -3,8 +3,6 @@
 # This script can be run by executing the following:
 # curl -sL https://git.io/fxnHC | bash
 
-########## Variables ##########
-
 ## Installer colors
 RED='\033[0;31m'
 NC='\033[0m' # No Color
@@ -20,3 +18,5 @@ curl -s "$MIRRORLIST_URL" | \
     sed -e 's/^#Server/Server/' -e '/^#/d' | \
     rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
 }
+
+rank_mirrors
