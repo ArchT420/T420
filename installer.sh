@@ -117,12 +117,13 @@ echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
 arch-chroot /mnt useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
 
-echo "$user:$password" | chpasswd
-echo "root:$rootpassword" | chpasswd
+echo "$user:$password" | chpasswd --root /mnt
+echo "root:$rootpassword" | chpasswd --root /mnt
 EOF
 
 ## Add AUR repository in /etc/pacman.conf
 cat <<EOF >> /etc/pacman.conf
+Architecture = auto
 [archlinuxfr]
 SigLevel = Never
 Server = http://repo.archlinux.fr/$arch
