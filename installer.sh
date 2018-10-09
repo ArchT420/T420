@@ -10,12 +10,28 @@ NC='\033[0m' # No Color
 WHITE='\e[1;37m'
 CYAN='\e[1;36m'
 
-## Users setup
-echo -e "${RED}Enter username, password and root password.${NC}\n"
+## Get information from user ##
+hostname=$(dialog --stdout --inputbox "HOSTNAME" 0 0) || exit 1
+clear
+: ${hostname:?"hostname cannot be empty"}
 
-read -p "Default user: " username
-read -p "Default user password: " password
-read -p "ROOT password: " rootpassword
+user=$(dialog --stdout --inputbox "Default user" 0 0) || exit 1
+clear
+: ${user:?"user cannot be empty"}
+
+password=$(dialog --stdout --passwordbox "Default user password" 0 0) || exit 1
+clear
+: ${password:?"password cannot be empty"}
+password2=$(dialog --stdout --passwordbox "Retype password" 0 0) || exit 1
+clear
+[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
+
+rootpassword=$(dialog --stdout --passwordbox "root password" 0 0) || exit 1
+clear
+: ${rootpassword:?"password cannot be empty"}
+rootpassword2=$(dialog --stdout --passwordbox "root password" 0 0) || exit 1
+clear
+[[ "$rootpassword" == "$rootpassword2" ]] || ( echo "Passwords did not match"; exit 1; )
 
 ## Set up logging ##
 echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
@@ -94,7 +110,6 @@ export LANG=en_US.UTF-8
 
 ## Set Time & Timezone
 ln -s /usr/share/zoneinfo/Europe/Tallinn > /etc/localtime
-timedatectl set-ntp true
 
 ## Enable DHCPCD (eth0 ethernet service)
 systemctl enable dhcpcd@enp0s25.service
@@ -110,7 +125,7 @@ echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
 EOF
 
-## Enable multilib in /etc/pacman.conf- this allows the installation of 32bit applications
+## Enable multilib in /etc/pacman.conf - this allows the installation of 32bit applications
 if [ "$(uname -m)" = "x86_64" ]
 then
 		cp /etc/pacman.conf /etc/pacman.conf.bkp
@@ -118,12 +133,12 @@ then
 		mv /tmp/pacman /etc/pacman.conf
 
 		useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
-		echo "$user:$password" | chpasswd
 		echo "root:$rootpassword" | chpasswd
+		echo "$user:$password" | chpasswd
 
 fi
 
-## Add AUR repository in /etc/pacman.conf
+## Add AUR repository in the end of /etc/pacman.conf
 cat <<EOF >> /etc/pacman.conf
 
 [archlinuxfr]
