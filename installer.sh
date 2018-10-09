@@ -81,7 +81,7 @@ echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
 echo -e "${RED}Now destroying any partition tables on the selected disk.${NC}\n"
 sleep 5
 sgdisk -Z ${device}
-echo -e "${WHITE} ${device}${RED}Has been zapped.${NC}\n"
+echo -e "${WHITE} ${device}${RED} Has been zapped.${NC}\n"
 sleep 3
 clear
 
@@ -113,10 +113,10 @@ mkdir /mnt/boot
 mkdir /mnt/home
 mount "${part_boot}" /mnt/boot
 mount "${part_home}" /mnt/home
-echo -e "${CYAN}Partitions mounted.${NC}\n"
+echo -e "${WHITE}Partitions mounted.${NC}\n"
 
 ## Install the base Arch system
-echo -e "${CYAN}Installing the base system into: ${WHITE}/mnt${NC}\n"
+echo -e "${CYAN}Installing packages ${YELLOW}base base-devel ${CYAN}to: ${WHITE}/mnt${NC}\n"
 yes '' | pacstrap -i /mnt base base-devel
 
 echo -e "${CYAN}Generating fstab to: ${WHITE}/mnt/etc/fstab${NC}\n"
@@ -140,8 +140,14 @@ echo "root:$rootpassword" | chpasswd
 echo "$user:$password" | chpasswd
 EOF
 
-### Install boot loader
+sed -i '82 s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g' /etc/sudoers > /etc/sudoers.new
+sed -i "83i Defaults rootpw" /etc/sudoers.new
+export EDITOR="cp /etc/sudoers.new"
+visudo
+rm /etc/sudoers.new
 
+echo -e "${RED}Installing bootloader${NC}\n"
+### Install boot loader
 if [[ $UEFI -eq 1 ]]; then
 arch-chroot /mnt /bin/bash <<EOF
 bootctl install
@@ -158,20 +164,19 @@ EOF
 ## Enable multilib in /etc/pacman.conf - this allows the installation of 32bit applications
 if [ "$(uname -m)" = "x86_64" ]
 then
-		cp /etc/pacman.conf /etc/pacman.conf.bkp
-		sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /etc/pacman.conf > /tmp/pacman
-		mv /tmp/pacman /etc/pacman.conf
+cp /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bkp
+sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /mnt/etc/pacman.conf > /tmp/pacman
+mv /tmp/pacman /mnt/etc/pacman.conf
 
 fi
 
 ## Add AUR repository in the end of /etc/pacman.conf
-cat <<EOF >> /etc/pacman.conf
+cat <<EOF >> /mnt/etc/pacman.conf
 
 [archlinuxfr]
 SigLevel = Never
 Server = http://repo.archlinux.fr/\$arch
 EOF
 
-
-
+echo "${CYAN} Type EDITOR=nano visudo, and uncomment %wheel and add Defaults rootpw"
 pacman -Sy
