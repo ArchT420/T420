@@ -115,7 +115,7 @@ systemctl enable fstrim.timer
 # Disable PC speaker beep
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 
-arch-chroot /mnt useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
+useradd -m -g users -G wheel,storage,power -s /bin/bash "$user"
 
 echo "$user:$password" | chpasswd --root /mnt
 echo "root:$rootpassword" | chpasswd --root /mnt
