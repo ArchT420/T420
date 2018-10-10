@@ -10,6 +10,3 @@ part_home="$(ls ${device}* | grep -E "^${device}p?4$")"	# /home partition4 creat
 echo -e "title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initrd\t/initramfs-linux.img\noptions\troot=PARTUUID=$(blkid -s PARTUUID -o value ${part_root}) rw" > /mnt/boot/loader/entries/arch.conf
 
 echo "done1"
-echo "hyep"
-echo "last"
-echo "hyep"
