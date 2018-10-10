@@ -58,7 +58,7 @@ clear
 rootpassword=$(dialog --stdout --passwordbox "root password" 0 0) || exit 1
 clear
 : ${rootpassword:?"password cannot be empty"}
-rootpassword2=$(dialog --stdout --passwordbox "root password" 0 0) || exit 1
+rootpassword2=$(dialog --stdout --passwordbox "Retype password" 0 0) || exit 1
 clear
 [[ "$rootpassword" == "$rootpassword2" ]] || ( echo "Passwords did not match"; exit 1; )
 
