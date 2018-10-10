@@ -12,7 +12,7 @@ CYAN='\e[1;36m'
 GREEN='\e[1;32m'
 
 ## Set up logging ##
-echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
+echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/stdout.log stderr.log${NC}\n"
 exec 1> >(tee "stdout.log")
 exec 2> >(tee "stderr.log")
 sleep 5
@@ -92,7 +92,7 @@ echo -e "${CYAN}Now creating the partitions.${NC}\n"
 
 sgdisk -n 1:0:+1G -t 0:EF00 -c 0:"boot" ${device} # partition 1 (UEFI BOOT), default start block, 200MB, type EF00 (EFI), label: "boot"
 sgdisk -n 2:0:+4G -t 0:8200 -c 0:"swap" ${device} # partition 2 (SWAP), default start block, 4GB, type 8200 (swap), label: "swap"
-sgdisk -n 3:0:+100G -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
+sgdisk -n 3:0:+2 -c 0:"root" ${device} # partition 3 (ROOT), default start block, 80GB, label: "swap"
 sgdisk -n 4:0:0 -c 0:"home" ${device} # partition 4, (Arch Linux), default start, remaining space, label: "swap"
 
 ## Create the filesystems
