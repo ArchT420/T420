@@ -10,8 +10,14 @@ NC='\033[0m' # No Color
 WHITE='\e[1;37m'
 CYAN='\e[1;36m'
 GREEN='\e[1;32m'
-#### UEFI / BIOS detection
 
+## Set up logging ##
+echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
+exec 1> >(tee "stdout.log")
+exec 2> >(tee "stderr.log")
+sleep 5
+
+#### UEFI / BIOS detection
 start() {
     DIALOG_RESULT=$(dialog --clear --stdout "$@" 2>/dev/null)
 }
@@ -21,13 +27,13 @@ start --title "Welcome" --msgbox "You have launched the Arch Linux bootstrapper.
 efivar -l >/dev/null 2>&1
 
 if [[ $? -eq 0 ]]; then
-    UEFI_BIOS_text="UEFI detected."
-    UEFI_radio="on"
+	RESULT="             Your computer is in UEFI mode."
 else
-	: ${YOU ARE IN BIOS MODE - this installer requires UEFI}
+	RESULT="             Your computer is in BIOS mode."
+	: ${Please turn on UEFI mode}
 fi
 
-start --title "UEFI check" --radiolist "${UEFI_BIOS_text}\nPress <Enter> to accept." 10 30 1 1 UEFI "$UEFI_radio"
+start --title "UEFI check" --msgbox "${RESULT}\n" 5 60
 [[ $DIALOG_RESULT -eq 1 ]] && UEFI=1 || UEFI=0
 
 ## Get information from user ##
@@ -52,12 +58,6 @@ clear
 rootpassword2=$(dialog --stdout --passwordbox "root password" 0 0) || exit 1
 clear
 [[ "$rootpassword" == "$rootpassword2" ]] || ( echo "Passwords did not match"; exit 1; )
-
-## Set up logging ##
-echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
-exec 1> >(tee "stdout.log")
-exec 2> >(tee "stderr.log")
-sleep 3
 
 # Rank 5 best mirrors from https://www.archlinux.org/mirrorlist/ and comment out the rest.
 MIRRORLIST_URL="https://www.archlinux.org/mirrorlist/?country=FI&country=LV&country=NO&country=PL&country=SE&protocol=https&use_mirror_status=on"
@@ -186,9 +186,7 @@ echo "root:$rootpassword" | chpasswd
 EOF
 
 echo -e "${RED}Adding "${user}" to sudoers.${NC}\n"
-arch-chroot /mnt << EOF
 echo -e "%wheel ALL=(ALL) ALL\nDefaults rootpw" > /mnt/etc/sudoers.d/99_wheel
-EOF
 echo -e "${RED}[arch-chroot] ${CYAN}"${user}"${NC} ${YELLOW}is now part of the group ${WHITE}%wheel.${NC}\n"
 
 ### Install boot loader
