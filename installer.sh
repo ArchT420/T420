@@ -1,4 +1,4 @@
-https://raw.githubusercontent.com/ArchT420/T420/master/installer.sh#!/bin/bash
+#!/bin/bash
 # This script can be run by executing the following:
 # curl -sL https://git.io/fxZL0 | bash
 
