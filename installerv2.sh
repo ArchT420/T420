@@ -188,7 +188,12 @@ EOF
 fi
 
 ## Configure Bootloader
-echo -e 'title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initramfs-linux.img\ninitrd\t/initramfs-linux.img/noptions\troot=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw' > /mnt/boot/loader/entries/arch.conf
+cat <<EOF > /mnt/boot/loader/entries/arch.conf
+title    Arch Linux
+linux    /vmlinuz-linux
+initrd   /initramfs-linux.img
+options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
+EOF
 
 ## Enable multilib in /etc/pacman.conf
 if [ "$(uname -m)" = "x86_64" ]
@@ -207,5 +212,6 @@ EOF
 
 echo -e "${WHITE}[arch-chroot] ${RED}leaving arch-chroot environment.${NC}\n"
 echo -e "${CYAN}Unmounting partitions.${NC}\n"
+
 umount -R /mnt
 echo -e "${WHITE}Arch Linux installation complete. Ready to ${GREEN}reboot.${NC}\n"
