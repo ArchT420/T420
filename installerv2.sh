@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script can be run by executing the following:
-# curl -sL https://git.io/fxZL0 | bash
+# curl -sL https://git.io/fxcQv| bash
 
 
 ## Installer colors
