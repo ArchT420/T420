@@ -18,22 +18,25 @@ exec 2> >(tee "stderr.log")
 sleep 5
 
 #### UEFI / BIOS detection
-start() {
-    DIALOG_RESULT=$(dialog --clear --stdout "$@" 2>/dev/null)
+bootstrapper_dialog() {
+    DIALOG_RESULT=$(dialog --clear --stdout --backtitle "Arch bootstrapper" --no-shadow "$@" 2>/dev/null)
 }
 
-start --title "Welcome" --msgbox "You have launched the Arch Linux bootstrapper. Follow the instructions on the screen.\n" 6 60
+bootstrapper_dialog --title "Welcome" --msgbox "Welcome to base Arch Linux bootstrapper.\n" 6 60
 
 efivar -l >/dev/null 2>&1
 
 if [[ $? -eq 0 ]]; then
-	RESULT="             Your computer is in UEFI mode."
+    UEFI_BIOS_text="UEFI detected."
+    UEFI_radio="on"
+    BIOS_radio="off"
 else
-	RESULT="             Your computer is in BIOS mode."
-	: ${Please turn on UEFI mode}
+    UEFI_BIOS_text="BIOS detected."
+    UEFI_radio="off"
+    BIOS_radio="on"
 fi
 
-start --title "UEFI check" --msgbox "${RESULT}\n" 5 60
+bootstrapper_dialog --title "UEFI or BIOS" --radiolist "${UEFI_BIOS_text}\nPress <Enter> to accept." 10 30 2 1 UEFI "$UEFI_radio" 2 BIOS "$BIOS_radio"
 [[ $DIALOG_RESULT -eq 1 ]] && UEFI=1 || UEFI=0
 
 ## Get information from user ##
@@ -78,9 +81,9 @@ clear
 
 echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
 echo -e "${RED}Now destroying any partition tables on the selected disk.${NC}\n"
+echo -e "${RED}"
 sleep 5
 sgdisk -Z ${device}
-echo -e "${WHITE} ${device}${RED} Has been zapped.${NC}\n"
 sleep 3
 clear
 
@@ -123,111 +126,86 @@ echo -e "${CYAN}Generating fstab to: ${WHITE}/mnt/etc/fstab${NC}\n"
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 
-##### arch-chroot #####
-echo -e "${RED}[arch-chroot] ${YELLOW}setting hostname${NC} ${CYAN}"${hostname}"${NC} in: ${WHITE}/etc/hostname${NC}\n"
+## arch-chroot stuff
 arch-chroot /mnt << EOF
 echo $hostname > /etc/hostname
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}uncommenting ${CYAN}#en_US${NC} ${YELLOW}in:${NC} ${WHITE}/etc/locale.gen${NC}\n"
 arch-chroot /mnt << EOF
 sed -i '176 s/^#en_US/en_US/' /etc/locale.gen
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}generating locales${NC}\n"
 arch-chroot /mnt << EOF
 locale-gen
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}setting locales${NC}\n"
 arch-chroot /mnt << EOF
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 export LANG=en_US.UTF-8
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}setting timezones${NC}\n"
 arch-chroot /mnt << EOF
 ln -s /usr/share/zoneinfo/Europe/Tallinn > /etc/localtime
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}enabling dhcpcd service${NC}\n"
 arch-chroot /mnt << EOF
 systemctl enable dhcpcd@enp0s25.service
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}installing ${CYAN}dialog wpa_supplicant bash-completion${NC}\n"
 arch-chroot /mnt << EOF
 pacman -S dialog wpa_supplicant bash-completion --noconfirm
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}enabling SSD trim service${NC}\n"
 arch-chroot /mnt << EOF
 systemctl enable fstrim.timer
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}blacklisting pcspkr${NC}\n"
 arch-chroot /mnt << EOF
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}adding default user${NC} ${CYAN}"${user}"${NC}\n"
+## Setup default user and passwords
 arch-chroot /mnt << EOF
 useradd -m -g users -G wheel,storage,power -s /bin/bash $user
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}setting default user password${NC}\n"
 arch-chroot /mnt << EOF
 echo "$user:$password" | chpasswd
 EOF
 
-echo -e "${RED}[arch-chroot] ${YELLOW}setting root password${NC}\n"
 arch-chroot /mnt << EOF
 echo "root:$rootpassword" | chpasswd
 EOF
 
-echo -e "${RED}Adding "${user}" to sudoers.${NC}\n"
+## Setup sudoers
 echo -e "%wheel ALL=(ALL) ALL\nDefaults rootpw" > /mnt/etc/sudoers.d/99_wheel
-echo -e "${RED}[arch-chroot] ${CYAN}"${user}"${NC} ${YELLOW}is now part of the group ${WHITE}%wheel.${NC}\n"
 
-### Install boot loader
-echo -e "${RED}[arch-chroot] ${YELLOW}Installing bootloader...${NC}\n"
+## Install boot loader
 if [[ $UEFI -eq 1 ]]; then
 arch-chroot /mnt /bin/bash <<EOF
 bootctl install
 EOF
 fi
-echo -e "${RED}[arch-chroot] ${WHITE}Bootloader installed.${NC}\n"
 
-echo -e "${RED}[arch-chroot] ${YELLOW}Configuring the bootloader in: ${WHITE}/boot/loader/entries/arch.conf${NC}\n"
-cat <<EOF > /mnt/boot/loader/entries/arch.conf
-title    Arch Linux
-linux    /vmlinuz-linux
-initrd   /initramfs-linux.img
-options  root=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw
-EOF
-echo -e "${RED}[arch-chroot] ${WHITE}Bootloader configured.${NC}\n"
+## Configure Bootloader
+echo -e 'title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initramfs-linux.img\ninitrd\t/initramfs-linux.img/noptions\troot=PARTUUID=$(blkid -s PARTUUID -o value "$part_root") rw' > /mnt/boot/loader/entries/arch.conf
 
-## Enable multilib in /etc/pacman.conf - this allows the installation of 32bit applications
-echo -e "${RED}[arch-chroot] ${YELLOW}Enabling [multilib] in: ${WHITE}/etc/pacman.conf${NC}\n"
+## Enable multilib in /etc/pacman.conf
 if [ "$(uname -m)" = "x86_64" ]
 then
 cp /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bkp
 sed '/^#\[multilib\]/{s/^#//;n;s/^#//;n;s/^#//}' /mnt/etc/pacman.conf > /tmp/pacman
 mv /tmp/pacman /mnt/etc/pacman.conf
 fi
-echo -e "${RED}[arch-chroot] ${WHITE}Multilib enabled.${NC}\n"
 
 ## Add AUR repository in the end of /etc/pacman.conf
-echo -e "${RED}[arch-chroot] ${YELLOW}Enabling AUR repository in: ${WHITE}/etc/pacman.conf${NC}\n"
 echo -e '\n[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch' >> /mnt/etc/pacman.conf
-echo -e "${RED}[arch-chroot] ${WHITE}AUR repository added.${NC}\n"
 
-echo -e "${RED}[arch-chroot] ${YELLOW}Synchronizing...${NC}\n"
 arch-chroot /mnt << EOF
 pacman -Sy
 EOF
-echo -e "${RED}[arch-chroot] ${YELLOW}Synced.${NC}\n"
+
 echo -e "${WHITE}[arch-chroot] ${RED}leaving arch-chroot environment.${NC}\n"
 echo -e "${CYAN}Unmounting partitions.${NC}\n"
 umount -R /mnt
-echo -e "${WHITE}Arch Linux installation complete. Ready to {RED}reboot.${NC}\n"
+echo -e "${WHITE}Arch Linux installation complete. Ready to ${GREEN}reboot.${NC}\n"
