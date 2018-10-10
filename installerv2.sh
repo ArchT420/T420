@@ -53,6 +53,9 @@ rootpassword2=$(dialog --stdout --passwordbox "root password" 0 0) || exit 1
 clear
 [[ "$rootpassword" == "$rootpassword2" ]] || ( echo "Passwords did not match"; exit 1; )
 
+devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
+device=$(dialog --stdout --menu "Select installtion disk" 0 0 0 ${devicelist}) || exit 1
+
 ## Set up logging ##
 echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
 exec 1> >(tee "stdout.log")
@@ -71,8 +74,6 @@ curl -s "$MIRRORLIST_URL" | \
     rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
 
 ## Select the installation disk, example: /dev/sda or /dev/sdb etc.
-devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
-device=$(dialog --stdout --menu "Select installtion disk" 0 0 0 ${devicelist}) || exit 1
 clear
 echo -e "${YELLOW}The selected disk is:${WHITE} ${device}${NC}\n"
 echo -e "${RED}Now destroying any partition tables on the selected disk.${NC}\n"
@@ -219,12 +220,7 @@ echo -e "${RED}[arch-chroot] ${WHITE}Multilib enabled.${NC}\n"
 
 ## Add AUR repository in the end of /etc/pacman.conf
 echo -e "${RED}[arch-chroot] ${YELLOW}Enabling AUR repository in: ${WHITE}/etc/pacman.conf${NC}\n"
-cat <<EOF >> /mnt/etc/pacman.conf
-
-[archlinuxfr]
-SigLevel = Never
-Server = http://repo.archlinux.fr/\$arch
-EOF
+echo -e '\n[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch' >> /mnt/etc/pacman.conf
 echo -e "${RED}[arch-chroot] ${WHITE}AUR repository added.${NC}\n"
 
 echo -e "${RED}[arch-chroot] ${YELLOW}Synchronizing...${NC}\n"
