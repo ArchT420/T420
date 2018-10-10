@@ -1,5 +1,5 @@
 #!/bin/bash
-# curl -sL https://git.io/fxcQv | bash
+# curl -sL https://git.io/fxWcp | bash
 
 logger(){
 	echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/.stdout.log stderr.log${NC}\n"
