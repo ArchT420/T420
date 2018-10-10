@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script can be run by executing the following:
-# curl -sL https://git.io/fxnHC | bash
+# curl -sL https://git.io/fxZL0 | bash
 
 
 ## Installer colors
@@ -12,25 +12,22 @@ CYAN='\e[1;36m'
 GREEN='\e[1;32m'
 #### UEFI / BIOS detection
 
-bootstrapper_dialog() {
-    DIALOG_RESULT=$(dialog --clear --stdout --backtitle "Arch bootstrapper" --no-shadow "$@" 2>/dev/null)
+start() {
+    DIALOG_RESULT=$(dialog --clear --stdout "$@" 2>/dev/null)
 }
 
-bootstrapper_dialog --title "Welcome" --msgbox "Welcome to base Arch Linux bootstrapper.\n" 6 60
+start --title "Welcome" --msgbox "You have launched the Arch Linux bootstrapper. Follow the instructions on the screen.\n" 6 60
 
 efivar -l >/dev/null 2>&1
 
 if [[ $? -eq 0 ]]; then
     UEFI_BIOS_text="UEFI detected."
     UEFI_radio="on"
-    BIOS_radio="off"
 else
-    UEFI_BIOS_text="BIOS detected."
-    UEFI_radio="off"
-    BIOS_radio="on"
+	: ${YOU ARE IN BIOS MODE - this installer requires UEFI}
 fi
 
-bootstrapper_dialog --title "UEFI or BIOS" --radiolist "${UEFI_BIOS_text}\nPress <Enter> to accept." 10 30 2 1 UEFI "$UEFI_radio" 2 BIOS "$BIOS_radio"
+start --title "UEFI check" --radiolist "${UEFI_BIOS_text}\nPress <Enter> to accept." 10 30 1 1 UEFI "$UEFI_radio"
 [[ $DIALOG_RESULT -eq 1 ]] && UEFI=1 || UEFI=0
 
 ## Get information from user ##
