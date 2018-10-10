@@ -12,3 +12,4 @@ echo -e "title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initrd\t/initramfs-l
 echo "done1"
 echo "hyep"
 echo "last"
+echo "hyep"
