@@ -6,7 +6,8 @@ part_boot="$(ls ${device}* | grep -E "^${device}p?1$")"	# /boot partition1 creat
 part_swap="$(ls ${device}* | grep -E "^${device}p?2$")"	# /swap partition2 created by sgdisk
 part_root="$(ls ${device}* | grep -E "^${device}p?3$")"	#   /	partition3 created by sgdisk
 part_home="$(ls ${device}* | grep -E "^${device}p?4$")"	# /home partition4 created by sgdisk
+partuuid=`blkid -s PARTUUID -o value ${part_root} | awk '{print $2}' | sed 's/"//g' | sed 's/^.*=//'`
 
-echo -e "title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initrd\t/initramfs-linux.img\noptions\troot=PARTUUID=$(blkid -s PARTUUID -o value ${part_root}) rw" > /mnt/boot/loader/entries/arch.conf
+echo -e "title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initrd\t/initramfs-linux.img\noptions\troot=PARTUUID=$(partuuid) rw" > /mnt/boot/loader/entries/arch.conf
 
-echo "done1"
+echo "do3n2e1"
