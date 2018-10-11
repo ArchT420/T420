@@ -4,7 +4,7 @@
 ### Set the desired partition sizes ###
 
 logger(){
-	echo -e "${CYAN}Output & Error logging has now been enabled:${WHITE} ~/stdout.log ~/stderr.log${NC}\n"
+	echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/stdout.log ~/stderr.log${NC}\n"
 	exec 1> >(tee "stdout.log")
 	exec 2> >(tee "stderr.log")
 	sleep 5
@@ -167,7 +167,7 @@ fi
 }
 
 pacstrap(){
-yes '' | pacstrap -i /mnt base base-devel
+pacstrap -i --noconfirm /mnt base base-devel
 }
 
 genfstab(){
