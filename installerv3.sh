@@ -4,7 +4,7 @@
 ### Set the desired partition sizes ###
 
 logger(){
-	echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/stdout.log ~/stderr.log${NC}\n"
+	echo -e "${CYAN}O111utput & Error logging has now been enabled.:${WHITE} ~/stdout.log ~/stderr.log${NC}\n"
 	exec 1> >(tee "stdout.log")
 	exec 2> >(tee "stderr.log")
 	sleep 5
@@ -204,15 +204,10 @@ EOF
 
 enable_enpinterface(){
 arch-chroot /mnt << EOF
-systemctl enable dhcpcd@"${enpinterface}".service
+systemctl enable dhcpcd@"$enpinterface".service
 EOF
 }
 
-enable_wlpinterface(){
-arch-chroot /mnt << EOF
-systemctl enable "${wlpinterface}"
-EOF
-}
 
 enable_fstrim(){
 arch-chroot /mnt << EOF
@@ -333,11 +328,34 @@ setup_services(){
 	enable_fstrim
 }
 
+
+### stupid
+input_boot_firmware
+input_hostname
+input_username
+input_password
+input_rootpassword
+input_ethernet
+input_selectdisks
+destroy_selected_disk
+create_partitions
+create_filesystems
+mount_partitions
+pacstrap
+genfstab
+set_hostname
+add_users_passwords
+conf_sudoers
+install_bootloader
+conf_bootloader
+conf_locale_gen
+localegen
+conf_locale_conf
+conf_zoneinfo
+conf_pcspkr_off
+conf_enable_multilib
+conf_aur
+update_repos
 #### Installation ####
 
-logger
-setup_gui
-setup_disks
-setup_install
-setup_chroot
-setup_services
+
