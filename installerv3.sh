@@ -4,7 +4,7 @@
 ### Set the desired partition sizes ###
 
 logger(){
-	echo -e "${CYAN}Output & Error logging has now been enabled.:${WHITE} ~/stdout.log ~/stderr.log${NC}\n"
+	echo -e "${CYAN}tOutput & Error logging has now been enabled.:${WHITE} ~/stdout.log ~/stderr.log${NC}\n"
 	exec 1> >(tee "stdout.log")
 	exec 2> >(tee "stderr.log")
 	sleep 5
